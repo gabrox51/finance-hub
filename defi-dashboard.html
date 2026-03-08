@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinanceHub - Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg-primary: #06080f;
+      --bg-secondary: #0c1017;
+      --bg-card: rgba(15, 20, 32, 0.8);
+      --bg-card-solid: #0f1420;
+      --bg-card-hover: rgba(25, 32, 50, 0.9);
+      --bg-input: #0a0e18;
+      --bg-glass: rgba(255,255,255,0.03);
+      --border: rgba(255,255,255,0.06);
+      --border-hover: rgba(255,255,255,0.12);
+      --border-focus: #6366f1;
+      --text-primary: #f0f2f5;
+      --text-secondary: #8b95a5;
+      --text-muted: #555f70;
+      --green: #10b981;
+      --green-dim: rgba(16,185,129,0.12);
+      --red: #ef4444;
+      --red-dim: rgba(239,68,68,0.12);
+      --blue: #3b82f6;
+      --blue-dim: rgba(59,130,246,0.12);
+      --purple: #8b5cf6;
+      --purple-dim: rgba(139,92,246,0.12);
+      --orange: #f59e0b;
+      --orange-dim: rgba(245,158,11,0.12);
+      --cyan: #06b6d4;
+      --gradient-purple: linear-gradient(135deg, #7c3aed, #a78bfa);
+      --gradient-green: linear-gradient(135deg, #059669, #34d399);
+      --gradient-blue: linear-gradient(135deg, #2563eb, #60a5fa);
+      --gradient-red: linear-gradient(135deg, #dc2626, #f87171);
+      --gradient-orange: linear-gradient(135deg, #d97706, #fbbf24);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg-primary);
+      font-family: var(--font);
+      color: var(--text-primary);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; top: -50%; left: -50%; width: 200%; height: 200%;
+      background: radial-gradient(ellipse at 30% 40%, rgba(59,130,246,0.05) 0%, transparent 50%),
+                  radial-gradient(ellipse at 70% 60%, rgba(16,185,129,0.04) 0%, transparent 50%),
+                  radial-gradient(ellipse at 50% 20%, rgba(139,92,246,0.03) 0%, transparent 50%);
+      z-index: -1; animation: bgShift 20s ease-in-out infinite alternate;
+    }
+    @keyframes bgShift { 0% { transform: translate(0,0); } 100% { transform: translate(-2%,-1%); } }
+
+    /* === NAV === */
+    .nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 28px;
+      background: rgba(12,16,23,0.85);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    }
+    .nav-brand { display: flex; align-items: center; gap: 10px; }
+    .nav-logo {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--gradient-purple);
+      display: flex; align-items: center; justify-content: center; font-size: 16px;
+    }
+    .nav-title { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em; }
+    .nav-links { display: flex; gap: 4px; }
+    .nav-link {
+      padding: 8px 14px; border-radius: var(--radius-sm);
+      color: var(--text-secondary); text-decoration: none; font-weight: 500; font-size: 0.85rem;
+      transition: all 150ms ease;
+    }
+    .nav-link:hover { background: var(--bg-glass); color: var(--text-primary); }
+    .nav-link.active { background: var(--blue-dim); color: var(--blue); }
+    .nav-actions { display: flex; align-items: center; gap: 8px; }
+    .btn-nav {
+      background: var(--bg-glass); border: 1px solid var(--border);
+      color: var(--text-secondary); padding: 7px 14px; border-radius: var(--radius-sm);
+      cursor: pointer; font-family: var(--font); font-weight: 600; font-size: 0.8rem;
+      transition: all 150ms ease;
+    }
+    .btn-nav:hover { border-color: var(--border-hover); color: var(--text-primary); }
+    .btn-icon {
+      background: transparent; border: 1px solid var(--border); color: var(--text-muted);
+      width: 34px; height: 34px; border-radius: var(--radius-sm); cursor: pointer; font-size: 0.9rem;
+      display: flex; align-items: center; justify-content: center; transition: all 150ms ease;
+    }
+    .btn-icon:hover { background: var(--bg-glass); border-color: var(--border-hover); color: var(--text-secondary); }
+    .btn-icon--danger:hover { border-color: var(--red); background: var(--red-dim); color: var(--red); }
+
+    /* === MAIN === */
+    .main { max-width: 1360px; margin: 0 auto; padding: 28px; display: flex; flex-direction: column; gap: 28px; }
+
+    /* === SUMMARY CARDS === */
+    .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .summary-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 22px;
+      position: relative; overflow: hidden;
+      transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+    }
+    .summary-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+    .summary-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.3); border-color: var(--border-hover); }
+    .summary-card--blue::before { background: var(--gradient-blue); }
+    .summary-card--green::before { background: var(--gradient-green); }
+    .summary-card--red::before { background: var(--gradient-red); }
+    .summary-card--orange::before { background: var(--gradient-orange); }
+    .summary-card__icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; margin-bottom: 14px;
+    }
+    .summary-card--blue .summary-card__icon { background: var(--blue-dim); }
+    .summary-card--green .summary-card__icon { background: var(--green-dim); }
+    .summary-card--red .summary-card__icon { background: var(--red-dim); }
+    .summary-card--orange .summary-card__icon { background: var(--orange-dim); }
+    .summary-card__label { display: block; color: var(--text-muted); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+    .summary-card__value { display: block; font-size: 1.35rem; font-weight: 800; letter-spacing: -0.02em; }
+    .summary-card--blue .summary-card__value { color: var(--blue); }
+    .summary-card--green .summary-card__value { color: var(--green); }
+    .summary-card--red .summary-card__value { color: var(--red); }
+    .summary-card--orange .summary-card__value { color: var(--orange); }
+
+    /* === CHARTS === */
+    .charts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    .chart-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 22px;
+    }
+    .chart-card h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 16px; }
+    .chart-card canvas { max-height: 280px; }
+
+    /* === TRANSACTIONS === */
+    .transactions-section { display: flex; flex-direction: column; gap: 16px; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; }
+    .section-header h2 { font-size: 1.1rem; font-weight: 800; letter-spacing: -0.01em; }
+    .btn-primary {
+      background: var(--gradient-blue); color: white; border: none;
+      padding: 8px 18px; border-radius: var(--radius-sm);
+      font-family: var(--font); font-weight: 600; font-size: 0.85rem;
+      cursor: pointer; transition: all 200ms ease;
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(37,99,235,0.35); }
+    .btn-full { width: 100%; padding: 12px; }
+
+    .transactions-filters { display: flex; gap: 8px; flex-wrap: wrap; }
+    .filter-input, .filter-select {
+      padding: 8px 14px; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text-primary);
+      font-family: var(--font); font-size: 0.82rem; transition: border-color 150ms;
+    }
+    .filter-input:focus, .filter-select:focus { outline: none; border-color: var(--border-focus); }
+    .filter-input { flex: 1; min-width: 180px; }
+    .filter-select { min-width: 150px; }
+
+    .transaction-list { display: flex; flex-direction: column; gap: 3px; }
+    .transaction-row {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 20px; background: var(--bg-card);
+      border: 1px solid var(--border); border-radius: var(--radius-md);
+      transition: all 150ms ease;
+    }
+    .transaction-row:hover { background: var(--bg-card-hover); border-color: var(--border-hover); }
+    .transaction-row__icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; flex-shrink: 0; background: var(--bg-glass);
+    }
+    .transaction-row__info { flex: 1; min-width: 0; }
+    .transaction-row__desc { display: block; font-weight: 600; font-size: 0.88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .transaction-row__category { display: block; color: var(--text-muted); font-size: 0.72rem; margin-top: 2px; font-weight: 500; }
+    .transaction-row__date { color: var(--text-secondary); font-size: 0.8rem; flex-shrink: 0; }
+    .transaction-row__amount { font-weight: 700; font-size: 0.92rem; flex-shrink: 0; min-width: 110px; text-align: right; }
+    .amount--income { color: var(--green); }
+    .amount--expense { color: var(--red); }
+
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+    .empty-state__icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.6; }
+    .empty-state__text { font-size: 0.88rem; line-height: 1.6; }
+
+    /* === MODAL === */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.75); display: none;
+      align-items: center; justify-content: center;
+      z-index: 200; backdrop-filter: blur(8px);
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-content {
+      background: var(--bg-card-solid); border: 1px solid var(--border);
+      border-radius: var(--radius-xl); padding: 28px;
+      width: 90%; max-width: 460px; max-height: 90vh; overflow-y: auto;
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .modal-header h3 { font-size: 1.1rem; font-weight: 800; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; color: var(--text-muted); font-size: 0.68rem; font-weight: 700; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .form-input, .form-select {
+      width: 100%; padding: 10px 14px;
+      background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text-primary);
+      font-family: var(--font); font-size: 0.9rem; transition: border-color 150ms;
+    }
+    .form-input:focus, .form-select:focus { outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+    .form-toggle-group { display: flex; gap: 6px; }
+    .form-toggle {
+      flex: 1; padding: 10px; background: var(--bg-input);
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      color: var(--text-muted); font-family: var(--font);
+      font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 150ms;
+    }
+    .form-toggle--active-expense { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+    .form-toggle--active-income { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+
+    /* === RESPONSIVE === */
+    @media (max-width: 1024px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 768px) {
+      .nav { flex-wrap: wrap; gap: 8px; padding: 10px 16px; }
+      .nav-links { order: 3; width: 100%; justify-content: center; }
+      .main { padding: 16px; gap: 20px; }
+      .summary-grid { grid-template-columns: 1fr; }
+      .charts-grid { grid-template-columns: 1fr; }
+      .transactions-filters { flex-direction: column; }
+      .filter-input, .filter-select { min-width: 100%; }
+      .transaction-row { flex-wrap: wrap; gap: 8px; }
+      .transaction-row__amount { min-width: auto; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-brand">
+      <div class="nav-logo">💰</div>
+      <span class="nav-title">FinanceHub</span>
+    </div>
+    <div class="nav-links">
+      <a href="defi-dashboard.html" class="nav-link" id="nav-dashboard">📊 Dashboard</a>
+      <a href="defi-radar-v2.html" class="nav-link" id="nav-radar">🔍 DeFi Radar</a>
+    </div>
+    <div class="nav-actions">
+      <button class="btn-nav" id="currencyToggle" onclick="toggleCurrency()">
+        <span id="currencyLabel">R$ BRL</span>
+      </button>
+      <button class="btn-icon" onclick="exportData()" title="Exportar">📤</button>
+      <button class="btn-icon" onclick="importData()" title="Importar">📥</button>
+    </div>
+  </nav>
+
+  <main class="main">
+    <section class="summary-grid">
+      <div class="summary-card summary-card--blue">
+        <div class="summary-card__icon">💰</div>
+        <span class="summary-card__label">Saldo Total</span>
+        <span class="summary-card__value" id="totalBalance">R$ 0,00</span>
+      </div>
+      <div class="summary-card summary-card--green">
+        <div class="summary-card__icon">📈</div>
+        <span class="summary-card__label">Receitas do Mês</span>
+        <span class="summary-card__value" id="monthIncome">R$ 0,00</span>
+      </div>
+      <div class="summary-card summary-card--red">
+        <div class="summary-card__icon">📉</div>
+        <span class="summary-card__label">Despesas do Mês</span>
+        <span class="summary-card__value" id="monthExpenses">R$ 0,00</span>
+      </div>
+      <div class="summary-card summary-card--orange">
+        <div class="summary-card__icon">🎯</div>
+        <span class="summary-card__label">Taxa de Economia</span>
+        <span class="summary-card__value" id="savingsRate">0%</span>
+      </div>
+    </section>
+
+    <section class="charts-grid">
+      <div class="chart-card">
+        <h3>Receitas vs Despesas</h3>
+        <canvas id="barChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Despesas por Categoria</h3>
+        <canvas id="doughnutChart"></canvas>
+      </div>
+    </section>
+
+    <section class="transactions-section">
+      <div class="section-header">
+        <h2>Transações</h2>
+        <button class="btn-primary" onclick="openModal()">+ Nova Transação</button>
+      </div>
+      <div class="transactions-filters">
+        <input type="text" class="filter-input" id="filterSearch" placeholder="🔍 Buscar..." oninput="filterTransactions()">
+        <select class="filter-select" id="filterCategory" onchange="filterTransactions()"><option value="">Todas categorias</option></select>
+        <select class="filter-select" id="filterType" onchange="filterTransactions()">
+          <option value="">Todos tipos</option>
+          <option value="income">📈 Receitas</option>
+          <option value="expense">📉 Despesas</option>
+        </select>
+        <input type="month" class="filter-input" id="filterMonth" onchange="filterTransactions()" style="min-width:155px">
+      </div>
+      <div class="transaction-list" id="transactionList"></div>
+    </section>
+  </main>
+
+  <div class="modal-overlay" id="transactionModal" onclick="if(event.target===this)closeModal()">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">Nova Transação</h3>
+        <button class="btn-icon" onclick="closeModal()">✕</button>
+      </div>
+      <form onsubmit="saveTransaction(event)">
+        <div class="form-group">
+          <label class="form-label">Tipo</label>
+          <div class="form-toggle-group">
+            <button type="button" class="form-toggle form-toggle--active-expense" id="toggleExpense" onclick="setType('expense')">📉 Despesa</button>
+            <button type="button" class="form-toggle" id="toggleIncome" onclick="setType('income')">📈 Receita</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descrição</label>
+          <input type="text" class="form-input" id="txnDescription" placeholder="Ex: Supermercado, Salário..." required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Valor (R$)</label>
+          <input type="number" class="form-input" id="txnAmount" step="0.01" min="0.01" placeholder="0,00" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Categoria</label>
+          <select class="form-select" id="txnCategory" required></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Data</label>
+          <input type="date" class="form-input" id="txnDate" required>
+        </div>
+        <input type="hidden" id="txnType" value="expense">
+        <input type="hidden" id="editId" value="">
+        <button type="submit" class="btn-primary btn-full">Salvar Transação</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // === CATEGORIES ===
+    const CATEGORIES = {
+      alimentacao:   { label: 'Alimentação',   emoji: '🍔', type: 'expense' },
+      transporte:    { label: 'Transporte',    emoji: '🚗', type: 'expense' },
+      moradia:       { label: 'Moradia',       emoji: '🏠', type: 'expense' },
+      saude:         { label: 'Saúde',         emoji: '🏥', type: 'expense' },
+      lazer:         { label: 'Lazer',         emoji: '🎮', type: 'expense' },
+      educacao:      { label: 'Educação',      emoji: '📚', type: 'expense' },
+      investimentos: { label: 'Investimentos', emoji: '💹', type: 'expense' },
+      outros:        { label: 'Outros',        emoji: '📦', type: 'expense' },
+      salario:       { label: 'Salário',       emoji: '💵', type: 'income' },
+      freelance:     { label: 'Freelance',     emoji: '💻', type: 'income' },
+      rendimentos:   { label: 'Rendimentos',   emoji: '📈', type: 'income' },
+    };
+    const CHART_COLORS = ['#10b981','#3b82f6','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#f97316'];
+
+    // === CURRENCY ===
+    const CURRENCY_CONFIG = { BRL: { symbol: 'R$', locale: 'pt-BR', code: 'BRL' }, USD: { symbol: 'US$', locale: 'en-US', code: 'USD' } };
+    function getCurrency() { return localStorage.getItem('finance_currency') || 'BRL'; }
+    function setCurrency(code) { localStorage.setItem('finance_currency', code); }
+    function formatCurrency(value, code) {
+      const cfg = CURRENCY_CONFIG[code || getCurrency()];
+      return new Intl.NumberFormat(cfg.locale, { style: 'currency', currency: cfg.code, minimumFractionDigits: 2 }).format(value);
+    }
+
+    let exchangeRate = 5.2;
+    async function fetchExchangeRate() {
+      const cached = JSON.parse(localStorage.getItem('finance_exchange_rate') || '{}');
+      if (cached.rate && (Date.now() - cached.timestamp) < 3600000) { exchangeRate = cached.rate; return; }
+      try {
+        const resp = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=usd-coin&vs_currencies=brl');
+        const data = await resp.json();
+        exchangeRate = data['usd-coin']?.brl || 5.2;
+        localStorage.setItem('finance_exchange_rate', JSON.stringify({ rate: exchangeRate, timestamp: Date.now() }));
+      } catch (e) { exchangeRate = cached.rate || 5.2; }
+    }
+    function convertValue(v) { return getCurrency() === 'USD' ? v / exchangeRate : v; }
+
+    // === NAV ===
+    function initNav() {
+      const p = location.pathname || location.href;
+      if (p.includes('defi-dashboard')) document.getElementById('nav-dashboard').classList.add('active');
+      else if (p.includes('defi-radar')) document.getElementById('nav-radar').classList.add('active');
+      updateCurrencyToggle();
+    }
+    function toggleCurrency() { setCurrency(getCurrency() === 'BRL' ? 'USD' : 'BRL'); updateCurrencyToggle(); refreshAllDisplays(); }
+    function updateCurrencyToggle() { document.getElementById('currencyLabel').textContent = getCurrency() === 'BRL' ? 'R$ BRL' : 'US$ USD'; }
+
+    // === DATA ===
+    function getTransactions() { return JSON.parse(localStorage.getItem('finance_transactions') || '[]'); }
+    function saveTransactions(t) { localStorage.setItem('finance_transactions', JSON.stringify(t)); }
+
+    // === EXPORT / IMPORT ===
+    function exportData() {
+      const data = { version: '1.0', exportedAt: new Date().toISOString(), currency: getCurrency(),
+        transactions: getTransactions(),
+        portfolio: JSON.parse(localStorage.getItem('crypto_portfolio') || '[]'),
+        protocols: JSON.parse(localStorage.getItem('crypto_protocols') || '[]'),
+        walletAddress: localStorage.getItem('wallet_address') || ''
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url;
+      a.download = 'financehub-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+      a.click(); URL.revokeObjectURL(url);
+    }
+    function importData() {
+      const input = document.createElement('input'); input.type = 'file'; input.accept = '.json';
+      input.onchange = (e) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          try {
+            const data = JSON.parse(ev.target.result);
+            if (data.version !== '1.0') throw new Error('Versão não suportada');
+            if (!confirm('Substituir todos os dados?')) return;
+            if (data.transactions) localStorage.setItem('finance_transactions', JSON.stringify(data.transactions));
+            if (data.portfolio) localStorage.setItem('crypto_portfolio', JSON.stringify(data.portfolio));
+            if (data.protocols) localStorage.setItem('crypto_protocols', JSON.stringify(data.protocols));
+            if (data.walletAddress) localStorage.setItem('wallet_address', data.walletAddress);
+            if (data.currency) setCurrency(data.currency);
+            location.reload();
+          } catch (err) { alert('Arquivo inválido: ' + err.message); }
+        };
+        reader.readAsText(e.target.files[0]);
+      };
+      input.click();
+    }
+
+    // === HELPERS ===
+    function getCurrentMonthRange() {
+      const now = new Date();
+      return { start: new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10),
+               end: new Date(now.getFullYear(), now.getMonth()+1, 0).toISOString().slice(0,10) };
+    }
+    function getLast6Months() {
+      const m = [], now = new Date();
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        m.push({ label: d.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
+                 start: d.toISOString().slice(0,10),
+                 end: new Date(d.getFullYear(), d.getMonth()+1, 0).toISOString().slice(0,10) });
+      }
+      return m;
+    }
+    function sumByTypeAndRange(type, s, e) {
+      return getTransactions().filter(t => t.type===type && t.date>=s && t.date<=e).reduce((a, t) => a + t.amount, 0);
+    }
+    function getCategoryTotals(type, s, e) {
+      const txns = getTransactions().filter(t => t.type===type && t.date>=s && t.date<=e);
+      const map = {};
+      txns.forEach(t => { map[t.category] = (map[t.category]||0) + t.amount; });
+      return Object.entries(map).map(([k,v]) => ({ key:k, total:v, label: CATEGORIES[k]?.label||k, emoji: CATEGORIES[k]?.emoji||'📦' })).sort((a,b) => b.total-a.total);
+    }
+    function formatDate(d) { return new Date(d+'T00:00:00').toLocaleDateString('pt-BR', { day:'2-digit', month:'short' }); }
+    function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    // === SUMMARY ===
+    function updateSummaryCards() {
+      const { start, end } = getCurrentMonthRange();
+      const inc = sumByTypeAndRange('income', start, end);
+      const exp = sumByTypeAndRange('expense', start, end);
+      const allInc = getTransactions().filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+      const allExp = getTransactions().filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+      const rate = inc > 0 ? Math.round(((inc-exp)/inc)*100) : 0;
+      document.getElementById('totalBalance').textContent = formatCurrency(convertValue(allInc - allExp));
+      document.getElementById('monthIncome').textContent = formatCurrency(convertValue(inc));
+      document.getElementById('monthExpenses').textContent = formatCurrency(convertValue(exp));
+      document.getElementById('savingsRate').textContent = rate + '%';
+    }
+
+    // === CHARTS ===
+    let barChartInstance = null, doughnutChartInstance = null;
+    function createBarChart() {
+      const ctx = document.getElementById('barChart').getContext('2d');
+      const months = getLast6Months();
+      return new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: months.map(m => m.label),
+          datasets: [
+            { label: 'Receitas', data: months.map(m => convertValue(sumByTypeAndRange('income',m.start,m.end))), backgroundColor: 'rgba(16,185,129,0.7)', borderColor: '#10b981', borderWidth: 1, borderRadius: 6 },
+            { label: 'Despesas', data: months.map(m => convertValue(sumByTypeAndRange('expense',m.start,m.end))), backgroundColor: 'rgba(239,68,68,0.7)', borderColor: '#ef4444', borderWidth: 1, borderRadius: 6 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: '#8b95a5', usePointStyle: true, pointStyle: 'circle', font: { family: "'Inter'", size: 11 } } } },
+          scales: {
+            x: { ticks: { color: '#555f70', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.03)' } },
+            y: { ticks: { color: '#555f70', callback: v => formatCurrency(v), font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.03)' } }
+          }
+        }
+      });
+    }
+    function createDoughnutChart() {
+      const ctx = document.getElementById('doughnutChart').getContext('2d');
+      const { start, end } = getCurrentMonthRange();
+      const cats = getCategoryTotals('expense', start, end);
+      if (!cats.length) {
+        return new Chart(ctx, { type: 'doughnut', data: { labels: ['Sem dados'], datasets: [{ data: [1], backgroundColor: ['rgba(255,255,255,0.03)'], borderWidth: 0 }] },
+          options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { labels: { color: '#555f70' } } } } });
+      }
+      return new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels: cats.map(c => c.emoji+' '+c.label), datasets: [{ data: cats.map(c => convertValue(c.total)), backgroundColor: CHART_COLORS.slice(0,cats.length), borderWidth: 0, hoverOffset: 6 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false, cutout: '70%',
+          plugins: {
+            legend: { position: 'right', labels: { color: '#8b95a5', padding: 10, usePointStyle: true, pointStyle: 'circle', font: { family: "'Inter'", size: 11 } } },
+            tooltip: { callbacks: { label: ctx => ctx.label + ': ' + formatCurrency(ctx.parsed) } }
+          }
+        }
+      });
+    }
+    function updateCharts() {
+      if (barChartInstance) barChartInstance.destroy();
+      if (doughnutChartInstance) doughnutChartInstance.destroy();
+      barChartInstance = createBarChart();
+      doughnutChartInstance = createDoughnutChart();
+    }
+
+    // === TRANSACTION LIST ===
+    function renderTransactionList(filtered) {
+      const txns = filtered || getTransactions();
+      const list = document.getElementById('transactionList');
+      if (!txns.length) {
+        list.innerHTML = '<div class="empty-state"><div class="empty-state__icon">📋</div><div class="empty-state__text">Nenhuma transação encontrada.<br>Clique em "+ Nova Transação" para começar.</div></div>';
+        return;
+      }
+      const sorted = [...txns].sort((a,b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
+      list.innerHTML = sorted.map(txn => {
+        const cat = CATEGORIES[txn.category] || { label: txn.category, emoji: '📦' };
+        const sign = txn.type === 'income' ? '+' : '-';
+        const cls = txn.type === 'income' ? 'amount--income' : 'amount--expense';
+        return `<div class="transaction-row">
+          <div class="transaction-row__icon">${cat.emoji}</div>
+          <div class="transaction-row__info">
+            <span class="transaction-row__desc">${escapeHtml(txn.description)}</span>
+            <span class="transaction-row__category">${cat.label}</span>
+          </div>
+          <div class="transaction-row__date">${formatDate(txn.date)}</div>
+          <div class="transaction-row__amount ${cls}">${sign} ${formatCurrency(convertValue(txn.amount))}</div>
+          <button class="btn-icon" onclick="editTransaction('${txn.id}')" title="Editar" style="flex-shrink:0">✏️</button>
+          <button class="btn-icon btn-icon--danger" onclick="deleteTransaction('${txn.id}')" title="Excluir" style="flex-shrink:0">🗑️</button>
+        </div>`;
+      }).join('');
+    }
+    function filterTransactions() {
+      const search = document.getElementById('filterSearch').value.toLowerCase();
+      const cat = document.getElementById('filterCategory').value;
+      const type = document.getElementById('filterType').value;
+      const month = document.getElementById('filterMonth').value;
+      let txns = getTransactions();
+      if (search) txns = txns.filter(t => t.description.toLowerCase().includes(search));
+      if (cat) txns = txns.filter(t => t.category === cat);
+      if (type) txns = txns.filter(t => t.type === type);
+      if (month) txns = txns.filter(t => t.date.slice(0,7) === month);
+      renderTransactionList(txns);
+    }
+
+    // === MODAL ===
+    let currentType = 'expense';
+    function openModal() {
+      document.getElementById('editId').value = '';
+      document.getElementById('modalTitle').textContent = 'Nova Transação';
+      document.getElementById('txnDescription').value = '';
+      document.getElementById('txnAmount').value = '';
+      document.getElementById('txnDate').value = new Date().toISOString().slice(0,10);
+      setType('expense');
+      document.getElementById('transactionModal').classList.add('active');
+    }
+    function closeModal() { document.getElementById('transactionModal').classList.remove('active'); }
+    function setType(type) {
+      currentType = type; document.getElementById('txnType').value = type;
+      document.getElementById('toggleExpense').className = 'form-toggle' + (type==='expense' ? ' form-toggle--active-expense' : '');
+      document.getElementById('toggleIncome').className = 'form-toggle' + (type==='income' ? ' form-toggle--active-income' : '');
+      const sel = document.getElementById('txnCategory');
+      sel.innerHTML = Object.entries(CATEGORIES).filter(([,v]) => v.type===type).map(([k,v]) => `<option value="${k}">${v.emoji} ${v.label}</option>`).join('');
+    }
+    function saveTransaction(e) {
+      e.preventDefault();
+      const editId = document.getElementById('editId').value;
+      const txn = {
+        id: editId || 'txn_'+Date.now(),
+        description: document.getElementById('txnDescription').value.trim(),
+        amount: parseFloat(document.getElementById('txnAmount').value),
+        category: document.getElementById('txnCategory').value,
+        type: document.getElementById('txnType').value,
+        date: document.getElementById('txnDate').value,
+        createdAt: Date.now()
+      };
+      const txns = getTransactions();
+      if (editId) { const i = txns.findIndex(t=>t.id===editId); if (i!==-1) { txn.createdAt=txns[i].createdAt; txns[i]=txn; } }
+      else txns.unshift(txn);
+      saveTransactions(txns); closeModal(); refreshAllDisplays();
+    }
+    function editTransaction(id) {
+      const txn = getTransactions().find(t => t.id===id);
+      if (!txn) return;
+      document.getElementById('editId').value = txn.id;
+      document.getElementById('modalTitle').textContent = 'Editar Transação';
+      document.getElementById('txnDescription').value = txn.description;
+      document.getElementById('txnAmount').value = txn.amount;
+      document.getElementById('txnDate').value = txn.date;
+      setType(txn.type);
+      document.getElementById('txnCategory').value = txn.category;
+      document.getElementById('transactionModal').classList.add('active');
+    }
+    function deleteTransaction(id) {
+      if (!confirm('Excluir esta transação?')) return;
+      saveTransactions(getTransactions().filter(t=>t.id!==id));
+      refreshAllDisplays();
+    }
+
+    function populateFilterCategories() {
+      document.getElementById('filterCategory').innerHTML = '<option value="">Todas categorias</option>' +
+        Object.entries(CATEGORIES).map(([k,v]) => `<option value="${k}">${v.emoji} ${v.label}</option>`).join('');
+    }
+
+    async function refreshAllDisplays() {
+      await fetchExchangeRate();
+      updateSummaryCards(); updateCharts(); renderTransactionList();
+    }
+
+    async function init() {
+      initNav(); populateFilterCategories(); setType('expense');
+      await refreshAllDisplays();
+    }
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>

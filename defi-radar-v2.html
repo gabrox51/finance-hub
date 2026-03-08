@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinanceHub - DeFi Radar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg-primary: #06080f;
+      --bg-secondary: #0c1017;
+      --bg-card: rgba(15, 20, 32, 0.8);
+      --bg-card-solid: #0f1420;
+      --bg-card-hover: rgba(25, 32, 50, 0.9);
+      --bg-input: #0a0e18;
+      --bg-glass: rgba(255,255,255,0.03);
+      --border: rgba(255,255,255,0.06);
+      --border-hover: rgba(255,255,255,0.12);
+      --border-focus: #6366f1;
+      --text-primary: #f0f2f5;
+      --text-secondary: #8b95a5;
+      --text-muted: #555f70;
+      --green: #10b981;
+      --green-dim: rgba(16,185,129,0.12);
+      --red: #ef4444;
+      --red-dim: rgba(239,68,68,0.12);
+      --blue: #3b82f6;
+      --blue-dim: rgba(59,130,246,0.12);
+      --purple: #8b5cf6;
+      --purple-dim: rgba(139,92,246,0.12);
+      --orange: #f59e0b;
+      --orange-dim: rgba(245,158,11,0.12);
+      --cyan: #06b6d4;
+      --cyan-dim: rgba(6,182,212,0.12);
+      --gradient-purple: linear-gradient(135deg, #7c3aed, #a78bfa);
+      --gradient-green: linear-gradient(135deg, #059669, #34d399);
+      --gradient-blue: linear-gradient(135deg, #2563eb, #60a5fa);
+      --gradient-orange: linear-gradient(135deg, #d97706, #fbbf24);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg-primary);
+      font-family: var(--font);
+      color: var(--text-primary);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* === ANIMATED BG === */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: radial-gradient(ellipse at 20% 50%, rgba(99,102,241,0.06) 0%, transparent 50%),
+                  radial-gradient(ellipse at 80% 20%, rgba(139,92,246,0.04) 0%, transparent 50%),
+                  radial-gradient(ellipse at 50% 80%, rgba(6,182,212,0.03) 0%, transparent 50%);
+      z-index: -1;
+      animation: bgShift 20s ease-in-out infinite alternate;
+    }
+    @keyframes bgShift {
+      0% { transform: translate(0,0) rotate(0deg); }
+      100% { transform: translate(-2%,-1%) rotate(1deg); }
+    }
+
+    /* === NAV === */
+    .nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 28px;
+      background: rgba(12,16,23,0.85);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    }
+    .nav-brand { display: flex; align-items: center; gap: 10px; }
+    .nav-logo {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--gradient-purple);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .nav-title { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em; }
+    .nav-links { display: flex; gap: 4px; }
+    .nav-link {
+      padding: 8px 14px; border-radius: var(--radius-sm);
+      color: var(--text-secondary); text-decoration: none; font-weight: 500; font-size: 0.85rem;
+      transition: all 150ms ease;
+    }
+    .nav-link:hover { background: var(--bg-glass); color: var(--text-primary); }
+    .nav-link.active { background: var(--purple-dim); color: var(--purple); }
+    .nav-actions { display: flex; align-items: center; gap: 8px; }
+    .btn-nav {
+      background: var(--bg-glass); border: 1px solid var(--border);
+      color: var(--text-secondary); padding: 7px 14px; border-radius: var(--radius-sm);
+      cursor: pointer; font-family: var(--font); font-weight: 600; font-size: 0.8rem;
+      transition: all 150ms ease; display: flex; align-items: center; gap: 6px;
+    }
+    .btn-nav:hover { border-color: var(--border-hover); color: var(--text-primary); background: rgba(255,255,255,0.05); }
+    .btn-icon {
+      background: transparent; border: 1px solid var(--border); color: var(--text-muted);
+      width: 34px; height: 34px; border-radius: var(--radius-sm); cursor: pointer; font-size: 0.9rem;
+      display: flex; align-items: center; justify-content: center; transition: all 150ms ease;
+    }
+    .btn-icon:hover { background: var(--bg-glass); border-color: var(--border-hover); color: var(--text-secondary); }
+    .btn-icon--danger:hover { border-color: var(--red); background: var(--red-dim); color: var(--red); }
+
+    /* === MAIN === */
+    .main { max-width: 1360px; margin: 0 auto; padding: 28px; display: flex; flex-direction: column; gap: 28px; }
+
+    /* === WALLET SECTION === */
+    .wallet-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      backdrop-filter: blur(12px);
+    }
+    .wallet-section__header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .wallet-section__title { font-size: 0.95rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .wallet-section__title span { font-size: 1.1rem; }
+    .wallet-section__help { color: var(--text-muted); font-size: 0.75rem; }
+    .wallet-section__help a { color: var(--purple); text-decoration: none; }
+    .wallet-section__help a:hover { text-decoration: underline; }
+    .wallet-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+    .wallet-form__group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 200px; }
+    .wallet-form__label { font-size: 0.7rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .wallet-form__input {
+      padding: 9px 14px; background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text-primary);
+      font-family: var(--font); font-size: 0.85rem; transition: border-color 150ms;
+    }
+    .wallet-form__input:focus { outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+    .wallet-form__input::placeholder { color: var(--text-muted); }
+    .btn-sync {
+      background: var(--gradient-purple); color: white; border: none;
+      padding: 9px 20px; border-radius: var(--radius-sm);
+      font-family: var(--font); font-weight: 600; font-size: 0.85rem;
+      cursor: pointer; transition: all 200ms ease;
+      display: flex; align-items: center; gap: 8px;
+      white-space: nowrap; height: 38px;
+    }
+    .btn-sync:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(124,58,237,0.35); }
+    .btn-sync:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-sync .spinner {
+      width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white; border-radius: 50%;
+      animation: spin 0.6s linear infinite; display: none;
+    }
+    .btn-sync.loading .spinner { display: block; }
+    .btn-sync.loading .btn-text { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .wallet-status { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .wallet-status:empty { margin-top: 0; }
+    .chain-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600;
+      background: var(--bg-glass); border: 1px solid var(--border);
+    }
+    .chain-pill__dot { width: 6px; height: 6px; border-radius: 50%; }
+
+    /* === SUMMARY CARDS === */
+    .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .summary-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 22px;
+      position: relative; overflow: hidden;
+      transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+    }
+    .summary-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    }
+    .summary-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.3); border-color: var(--border-hover); }
+    .summary-card--purple::before { background: var(--gradient-purple); }
+    .summary-card--green::before { background: var(--gradient-green); }
+    .summary-card--orange::before { background: var(--gradient-orange); }
+    .summary-card--blue::before { background: var(--gradient-blue); }
+    .summary-card__icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; margin-bottom: 14px;
+    }
+    .summary-card--purple .summary-card__icon { background: var(--purple-dim); }
+    .summary-card--green .summary-card__icon { background: var(--green-dim); }
+    .summary-card--orange .summary-card__icon { background: var(--orange-dim); }
+    .summary-card--blue .summary-card__icon { background: var(--blue-dim); }
+    .summary-card__label { display: block; color: var(--text-muted); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+    .summary-card__value { display: block; font-size: 1.35rem; font-weight: 800; letter-spacing: -0.02em; }
+    .summary-card--purple .summary-card__value { color: var(--purple); }
+    .summary-card--green .summary-card__value { color: var(--green); }
+    .summary-card--orange .summary-card__value { color: var(--orange); }
+    .summary-card--blue .summary-card__value { color: var(--blue); }
+
+    /* === CHARTS === */
+    .charts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    .chart-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 22px;
+    }
+    .chart-card__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .chart-card__header h3, .chart-card h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 16px; color: var(--text-primary); }
+    .chart-card__header h3 { margin-bottom: 0; }
+    .chart-card canvas { max-height: 280px; }
+    .chart-select {
+      background: var(--bg-input); border: 1px solid var(--border);
+      color: var(--text-primary); padding: 5px 10px; border-radius: var(--radius-sm);
+      font-family: var(--font); font-size: 0.8rem;
+    }
+
+    /* === SECTION HEADER === */
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .section-header h2 { font-size: 1.1rem; font-weight: 800; letter-spacing: -0.01em; }
+    .section-header__actions { display: flex; gap: 8px; }
+    .btn-primary {
+      background: var(--gradient-purple); color: white; border: none;
+      padding: 8px 18px; border-radius: var(--radius-sm);
+      font-family: var(--font); font-weight: 600; font-size: 0.85rem;
+      cursor: pointer; transition: all 200ms ease;
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(124,58,237,0.35); }
+    .btn-secondary {
+      background: var(--bg-glass); color: var(--text-secondary); border: 1px solid var(--border);
+      padding: 8px 18px; border-radius: var(--radius-sm);
+      font-family: var(--font); font-weight: 600; font-size: 0.85rem;
+      cursor: pointer; transition: all 150ms;
+    }
+    .btn-secondary:hover { border-color: var(--purple); color: var(--purple); }
+    .btn-full { width: 100%; padding: 12px; justify-content: center; }
+
+    /* === TOKEN TABLE === */
+    .token-table-wrapper {
+      overflow-x: auto; border-radius: var(--radius-lg);
+      border: 1px solid var(--border); background: var(--bg-card);
+    }
+    .token-table { width: 100%; border-collapse: collapse; }
+    .token-table thead th {
+      text-align: left; color: var(--text-muted); font-weight: 600;
+      padding: 12px 16px; background: rgba(255,255,255,0.02);
+      font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em;
+      border-bottom: 1px solid var(--border);
+    }
+    .token-table thead th:first-child { padding-left: 20px; }
+    .token-table tbody tr { border-bottom: 1px solid var(--border); transition: background 150ms; }
+    .token-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+    .token-table tbody tr:last-child { border-bottom: none; }
+    .token-table td { padding: 14px 16px; }
+    .token-table td:first-child { padding-left: 20px; }
+    .token-name-cell { display: flex; align-items: center; gap: 10px; }
+    .token-logo {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--bg-glass); border: 1px solid var(--border);
+      object-fit: cover; flex-shrink: 0;
+    }
+    .token-info { display: flex; flex-direction: column; }
+    .token-name { font-weight: 600; font-size: 0.88rem; }
+    .token-symbol { color: var(--text-muted); font-size: 0.72rem; font-weight: 500; }
+    .token-value { font-weight: 700; font-size: 0.9rem; }
+    .change-positive { color: var(--green); font-weight: 600; }
+    .change-negative { color: var(--red); font-weight: 600; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 7px; border-radius: 4px; font-size: 0.62rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .badge--wallet { background: var(--cyan-dim); color: var(--cyan); }
+    .badge--manual { background: var(--orange-dim); color: var(--orange); }
+    .badge--chain { background: var(--bg-glass); color: var(--text-secondary); border: 1px solid var(--border); }
+
+    /* Chain colors */
+    .chain-eth { color: #627eea; background: rgba(98,126,234,0.1); border-color: rgba(98,126,234,0.2); }
+    .chain-polygon, .chain-polygon_zkevm { color: #8247e5; background: rgba(130,71,229,0.1); border-color: rgba(130,71,229,0.2); }
+    .chain-arbitrum { color: #28a0f0; background: rgba(40,160,240,0.1); border-color: rgba(40,160,240,0.2); }
+    .chain-bsc { color: #f0b90b; background: rgba(240,185,11,0.1); border-color: rgba(240,185,11,0.2); }
+    .chain-optimism { color: #ff0420; background: rgba(255,4,32,0.1); border-color: rgba(255,4,32,0.2); }
+    .chain-avalanche { color: #e84142; background: rgba(232,65,66,0.1); border-color: rgba(232,65,66,0.2); }
+    .chain-base { color: #0052ff; background: rgba(0,82,255,0.1); border-color: rgba(0,82,255,0.2); }
+
+    /* === PROTOCOLS === */
+    .protocol-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+    .protocol-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 20px; position: relative;
+      transition: transform 200ms ease, border-color 200ms ease;
+    }
+    .protocol-card:hover { transform: translateY(-2px); border-color: var(--border-hover); }
+    .protocol-card__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .protocol-card__name { font-weight: 700; font-size: 1rem; }
+    .protocol-card__type {
+      background: var(--purple-dim); color: var(--purple);
+      padding: 3px 10px; border-radius: 20px; font-size: 0.65rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .protocol-card__stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .protocol-stat__label { display: block; color: var(--text-muted); font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+    .protocol-stat__value { display: block; font-weight: 700; margin-top: 3px; font-size: 0.92rem; }
+    .protocol-stat__value--green { color: var(--green); }
+    .protocol-card__delete { position: absolute; top: 16px; right: 16px; }
+
+    /* === MODAL === */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.75); display: none;
+      align-items: center; justify-content: center;
+      z-index: 200; backdrop-filter: blur(8px);
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-content {
+      background: var(--bg-card-solid); border: 1px solid var(--border);
+      border-radius: var(--radius-xl); padding: 28px;
+      width: 90%; max-width: 460px; max-height: 90vh; overflow-y: auto;
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .modal-header h3 { font-size: 1.1rem; font-weight: 800; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; color: var(--text-muted); font-size: 0.68rem; font-weight: 700; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .form-input, .form-select {
+      width: 100%; padding: 10px 14px;
+      background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text-primary);
+      font-family: var(--font); font-size: 0.9rem; transition: border-color 150ms;
+    }
+    .form-input:focus, .form-select:focus { outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+    .form-toggle-group { display: flex; gap: 6px; }
+    .form-toggle {
+      flex: 1; padding: 10px; background: var(--bg-input);
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      color: var(--text-muted); font-family: var(--font);
+      font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 150ms;
+    }
+    .form-toggle--active { background: var(--purple-dim); border-color: var(--purple); color: var(--purple); }
+
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+    .empty-state__icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.6; }
+    .empty-state__text { font-size: 0.88rem; line-height: 1.6; }
+
+    /* === RESPONSIVE === */
+    @media (max-width: 1024px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 768px) {
+      .nav { flex-wrap: wrap; gap: 8px; padding: 10px 16px; }
+      .nav-links { order: 3; width: 100%; justify-content: center; }
+      .main { padding: 16px; gap: 20px; }
+      .summary-grid { grid-template-columns: 1fr; }
+      .charts-grid { grid-template-columns: 1fr; }
+      .protocol-grid { grid-template-columns: 1fr; }
+      .wallet-form { flex-direction: column; }
+      .wallet-form__group { min-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-brand">
+      <div class="nav-logo">💰</div>
+      <span class="nav-title">FinanceHub</span>
+    </div>
+    <div class="nav-links">
+      <a href="defi-dashboard.html" class="nav-link" id="nav-dashboard">📊 Dashboard</a>
+      <a href="defi-radar-v2.html" class="nav-link" id="nav-radar">🔍 DeFi Radar</a>
+    </div>
+    <div class="nav-actions">
+      <button class="btn-nav" id="currencyToggle" onclick="toggleCurrency()">
+        <span id="currencyLabel">R$ BRL</span>
+      </button>
+      <button class="btn-icon" onclick="exportData()" title="Exportar">📤</button>
+      <button class="btn-icon" onclick="importData()" title="Importar">📥</button>
+    </div>
+  </nav>
+
+  <main class="main">
+    <!-- Wallet Connect -->
+    <section class="wallet-section">
+      <div class="wallet-section__header">
+        <div class="wallet-section__title"><span>🔗</span> Conectar Carteira</div>
+        <div class="wallet-section__help">
+          <a href="https://www.ankr.com/rpc/" target="_blank" rel="noopener">Obter API key grátis na Ankr →</a>
+        </div>
+      </div>
+      <div class="wallet-form">
+        <div class="wallet-form__group" style="flex:2">
+          <label class="wallet-form__label">Endereço da Carteira</label>
+          <input type="text" class="wallet-form__input" id="walletAddress" placeholder="0x... (endereço EVM)" spellcheck="false">
+        </div>
+        <div class="wallet-form__group">
+          <label class="wallet-form__label">API Key (Ankr)</label>
+          <input type="password" class="wallet-form__input" id="ankrKey" placeholder="Sua API key da Ankr">
+        </div>
+        <button class="btn-sync" id="syncBtn" onclick="syncWallet()">
+          <div class="spinner"></div>
+          <span class="btn-text">🔄 Sincronizar</span>
+        </button>
+      </div>
+      <div class="wallet-status" id="walletStatus"></div>
+    </section>
+
+    <!-- Summary Cards -->
+    <section class="summary-grid">
+      <div class="summary-card summary-card--purple">
+        <div class="summary-card__icon">💎</div>
+        <span class="summary-card__label">Valor Total</span>
+        <span class="summary-card__value" id="totalValue">R$ 0,00</span>
+      </div>
+      <div class="summary-card summary-card--green">
+        <div class="summary-card__icon">📊</div>
+        <span class="summary-card__label">DeFi Investido</span>
+        <span class="summary-card__value" id="defiInvested">R$ 0,00</span>
+      </div>
+      <div class="summary-card summary-card--orange">
+        <div class="summary-card__icon">🏆</div>
+        <span class="summary-card__label">Melhor Performer</span>
+        <span class="summary-card__value" id="bestPerformer">-</span>
+      </div>
+      <div class="summary-card summary-card--blue">
+        <div class="summary-card__icon">🪙</div>
+        <span class="summary-card__label">Total de Ativos</span>
+        <span class="summary-card__value" id="assetCount">0</span>
+      </div>
+    </section>
+
+    <!-- Charts -->
+    <section class="charts-grid">
+      <div class="chart-card">
+        <h3>Alocação do Portfolio</h3>
+        <canvas id="allocationChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card__header">
+          <h3>Histórico de Preço (30d)</h3>
+          <select class="chart-select" id="chartTokenSelect" onchange="loadPriceHistory()"></select>
+        </div>
+        <canvas id="priceHistoryChart"></canvas>
+      </div>
+    </section>
+
+    <!-- Token Table -->
+    <section>
+      <div class="section-header">
+        <h2>Meus Tokens</h2>
+        <div class="section-header__actions">
+          <button class="btn-secondary" onclick="syncWallet()">🔄 Sync Wallet</button>
+          <button class="btn-primary" onclick="openTokenModal()">+ Adicionar Token</button>
+        </div>
+      </div>
+      <div class="token-table-wrapper">
+        <table class="token-table">
+          <thead>
+            <tr>
+              <th>Token</th>
+              <th>Chain</th>
+              <th>Quantidade</th>
+              <th>Preço Atual</th>
+              <th>Valor Total</th>
+              <th>24h</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tokenTableBody">
+            <tr><td colspan="7"><div class="empty-state"><div class="empty-state__icon">🪙</div><div class="empty-state__text">Nenhum token adicionado.<br>Conecte sua carteira ou adicione manualmente.</div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- DeFi Protocols -->
+    <section>
+      <div class="section-header">
+        <h2>Protocolos DeFi</h2>
+        <button class="btn-primary" onclick="openProtocolModal()">+ Adicionar Protocolo</button>
+      </div>
+      <div class="protocol-grid" id="protocolGrid">
+        <div class="empty-state" style="grid-column:1/-1">
+          <div class="empty-state__icon">🏦</div>
+          <div class="empty-state__text">Nenhum protocolo adicionado.<br>Acompanhe seus investimentos em DeFi.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Token Modal -->
+  <div class="modal-overlay" id="tokenModal" onclick="if(event.target===this)this.classList.remove('active')">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Adicionar Token</h3>
+        <button class="btn-icon" onclick="document.getElementById('tokenModal').classList.remove('active')">✕</button>
+      </div>
+      <form onsubmit="saveToken(event)">
+        <div class="form-group">
+          <label class="form-label">Modo</label>
+          <div class="form-toggle-group">
+            <button type="button" class="form-toggle form-toggle--active" id="toggleSelect" onclick="setTokenMode('select')">📋 Selecionar</button>
+            <button type="button" class="form-toggle" id="toggleManual" onclick="setTokenMode('manual')">✏️ Manual</button>
+          </div>
+        </div>
+        <div id="tokenSelectMode">
+          <div class="form-group">
+            <label class="form-label">Token</label>
+            <select class="form-select" id="tokenSelect"></select>
+          </div>
+        </div>
+        <div id="tokenManualMode" style="display:none">
+          <div class="form-group">
+            <label class="form-label">Nome</label>
+            <input type="text" class="form-input" id="manualTokenName" placeholder="Ex: Meu Token">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Símbolo</label>
+            <input type="text" class="form-input" id="manualTokenSymbol" placeholder="Ex: MTK" maxlength="10" style="text-transform:uppercase">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Preço Atual (R$)</label>
+            <input type="number" class="form-input" id="manualTokenPrice" step="0.000001" placeholder="0.00">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Quantidade</label>
+          <input type="number" class="form-input" id="tokenAmount" step="any" min="0" placeholder="0.00" required>
+        </div>
+        <input type="hidden" id="tokenMode" value="select">
+        <button type="submit" class="btn-primary btn-full">Adicionar Token</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Protocol Modal -->
+  <div class="modal-overlay" id="protocolModal" onclick="if(event.target===this)this.classList.remove('active')">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Adicionar Protocolo DeFi</h3>
+        <button class="btn-icon" onclick="document.getElementById('protocolModal').classList.remove('active')">✕</button>
+      </div>
+      <form onsubmit="saveProtocol(event)">
+        <div class="form-group">
+          <label class="form-label">Nome do Protocolo</label>
+          <input type="text" class="form-input" id="protoName" placeholder="Ex: Aave V3, Lido, Uniswap" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tipo</label>
+          <select class="form-select" id="protoType">
+            <option value="staking">🔒 Staking</option>
+            <option value="lending">🏦 Lending</option>
+            <option value="lp">💧 Liquidity Pool</option>
+            <option value="farming">🌾 Farming</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Valor Investido (R$)</label>
+          <input type="number" class="form-input" id="protoInvested" step="0.01" min="0" placeholder="0,00" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">APY (%)</label>
+          <input type="number" class="form-input" id="protoApy" step="0.01" min="0" placeholder="0,00" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Rewards Acumulados (R$)</label>
+          <input type="number" class="form-input" id="protoRewards" step="0.01" min="0" value="0" placeholder="0,00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Token</label>
+          <input type="text" class="form-input" id="protoToken" placeholder="Ex: AAVE, ETH, UNI" required>
+        </div>
+        <button type="submit" class="btn-primary btn-full">Adicionar Protocolo</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // === CONFIG ===
+    const POPULAR_TOKENS = [
+      { id: 'bitcoin', symbol: 'BTC', name: 'Bitcoin' },
+      { id: 'ethereum', symbol: 'ETH', name: 'Ethereum' },
+      { id: 'solana', symbol: 'SOL', name: 'Solana' },
+      { id: 'binancecoin', symbol: 'BNB', name: 'BNB' },
+      { id: 'cardano', symbol: 'ADA', name: 'Cardano' },
+      { id: 'ripple', symbol: 'XRP', name: 'XRP' },
+      { id: 'polkadot', symbol: 'DOT', name: 'Polkadot' },
+      { id: 'avalanche-2', symbol: 'AVAX', name: 'Avalanche' },
+      { id: 'chainlink', symbol: 'LINK', name: 'Chainlink' },
+      { id: 'matic-network', symbol: 'MATIC', name: 'Polygon' },
+      { id: 'dogecoin', symbol: 'DOGE', name: 'Dogecoin' },
+      { id: 'uniswap', symbol: 'UNI', name: 'Uniswap' },
+      { id: 'aave', symbol: 'AAVE', name: 'Aave' },
+      { id: 'the-graph', symbol: 'GRT', name: 'The Graph' },
+      { id: 'render-token', symbol: 'RNDR', name: 'Render' }
+    ];
+
+    const CHAIN_CONFIG = {
+      eth: { label: 'ETH', class: 'chain-eth' },
+      polygon: { label: 'MATIC', class: 'chain-polygon' },
+      polygon_zkevm: { label: 'zkEVM', class: 'chain-polygon_zkevm' },
+      arbitrum: { label: 'ARB', class: 'chain-arbitrum' },
+      bsc: { label: 'BSC', class: 'chain-bsc' },
+      optimism: { label: 'OP', class: 'chain-optimism' },
+      avalanche: { label: 'AVAX', class: 'chain-avalanche' },
+      base: { label: 'BASE', class: 'chain-base' },
+      fantom: { label: 'FTM', class: 'chain-eth' },
+      gnosis: { label: 'GNO', class: 'chain-eth' },
+    };
+
+    const CHART_COLORS = ['#8b5cf6','#10b981','#3b82f6','#f59e0b','#ef4444','#ec4899','#06b6d4','#f97316','#84cc16','#a855f7'];
+    const TYPE_LABELS = {
+      staking: { label: 'Staking', emoji: '🔒' },
+      lending: { label: 'Lending', emoji: '🏦' },
+      lp: { label: 'Liquidity Pool', emoji: '💧' },
+      farming: { label: 'Farming', emoji: '🌾' }
+    };
+
+    // === CURRENCY ===
+    const CURRENCY_CONFIG = {
+      BRL: { symbol: 'R$', locale: 'pt-BR', code: 'BRL' },
+      USD: { symbol: 'US$', locale: 'en-US', code: 'USD' }
+    };
+    function getCurrency() { return localStorage.getItem('finance_currency') || 'BRL'; }
+    function setCurrency(code) { localStorage.setItem('finance_currency', code); }
+    function formatCurrency(value, code) {
+      const cfg = CURRENCY_CONFIG[code || getCurrency()];
+      return new Intl.NumberFormat(cfg.locale, { style: 'currency', currency: cfg.code, minimumFractionDigits: 2 }).format(value);
+    }
+
+    let exchangeRate = 5.2;
+    async function fetchExchangeRate() {
+      const cached = JSON.parse(localStorage.getItem('finance_exchange_rate') || '{}');
+      if (cached.rate && (Date.now() - cached.timestamp) < 3600000) { exchangeRate = cached.rate; return cached.rate; }
+      try {
+        const resp = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=usd-coin&vs_currencies=brl');
+        const data = await resp.json();
+        const rate = data['usd-coin']?.brl || 5.2;
+        localStorage.setItem('finance_exchange_rate', JSON.stringify({ rate, timestamp: Date.now() }));
+        exchangeRate = rate; return rate;
+      } catch (e) { exchangeRate = cached.rate || 5.2; return exchangeRate; }
+    }
+    function convertValue(amountBRL) { return getCurrency() === 'USD' ? amountBRL / exchangeRate : amountBRL; }
+
+    // === NAV ===
+    function initNav() {
+      const path = location.pathname || location.href;
+      if (path.includes('defi-dashboard')) document.getElementById('nav-dashboard').classList.add('active');
+      else if (path.includes('defi-radar')) document.getElementById('nav-radar').classList.add('active');
+      updateCurrencyToggle();
+    }
+    function toggleCurrency() { setCurrency(getCurrency() === 'BRL' ? 'USD' : 'BRL'); updateCurrencyToggle(); refreshAllDisplays(); }
+    function updateCurrencyToggle() { document.getElementById('currencyLabel').textContent = getCurrency() === 'BRL' ? 'R$ BRL' : 'US$ USD'; }
+
+    // === EXPORT / IMPORT ===
+    function exportData() {
+      const data = { version: '1.0', exportedAt: new Date().toISOString(), currency: getCurrency(),
+        transactions: JSON.parse(localStorage.getItem('finance_transactions') || '[]'),
+        portfolio: getPortfolio(), protocols: getProtocols(),
+        walletAddress: localStorage.getItem('wallet_address') || ''
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url;
+      a.download = 'financehub-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+      a.click(); URL.revokeObjectURL(url);
+    }
+    function importData() {
+      const input = document.createElement('input'); input.type = 'file'; input.accept = '.json';
+      input.onchange = (e) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          try {
+            const data = JSON.parse(ev.target.result);
+            if (data.version !== '1.0') throw new Error('Versão não suportada');
+            if (!confirm('Isso substituirá todos os dados atuais. Continuar?')) return;
+            if (data.transactions) localStorage.setItem('finance_transactions', JSON.stringify(data.transactions));
+            if (data.portfolio) localStorage.setItem('crypto_portfolio', JSON.stringify(data.portfolio));
+            if (data.protocols) localStorage.setItem('crypto_protocols', JSON.stringify(data.protocols));
+            if (data.walletAddress) localStorage.setItem('wallet_address', data.walletAddress);
+            if (data.currency) setCurrency(data.currency);
+            location.reload();
+          } catch (err) { alert('Arquivo inválido: ' + err.message); }
+        };
+        reader.readAsText(e.target.files[0]);
+      };
+      input.click();
+    }
+
+    // === DATA ===
+    function getPortfolio() { return JSON.parse(localStorage.getItem('crypto_portfolio') || '[]'); }
+    function savePortfolio(p) { localStorage.setItem('crypto_portfolio', JSON.stringify(p)); }
+    function getProtocols() { return JSON.parse(localStorage.getItem('crypto_protocols') || '[]'); }
+    function saveProtocols(p) { localStorage.setItem('crypto_protocols', JSON.stringify(p)); }
+
+    // === ANKR WALLET SYNC ===
+    async function syncWallet() {
+      const address = document.getElementById('walletAddress').value.trim();
+      const apiKey = document.getElementById('ankrKey').value.trim();
+
+      if (!address) return alert('Informe o endereço da carteira');
+      if (!apiKey) return alert('Informe a API key da Ankr. Obtenha gratuitamente em ankr.com/rpc');
+
+      // Save config
+      localStorage.setItem('wallet_address', address);
+      localStorage.setItem('ankr_api_key', apiKey);
+
+      const btn = document.getElementById('syncBtn');
+      btn.classList.add('loading');
+      btn.disabled = true;
+
+      try {
+        const resp = await fetch(`https://rpc.ankr.com/multichain/${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            method: 'ankr_getAccountBalance',
+            params: { walletAddress: address, onlyWhitelisted: true },
+            id: 1
+          })
+        });
+
+        const data = await resp.json();
+
+        if (data.error) {
+          throw new Error(data.error.message || 'Erro na API Ankr');
+        }
+
+        const assets = data.result?.assets || [];
+
+        // Remove old wallet tokens, keep manual ones
+        const portfolio = getPortfolio().filter(t => t.source !== 'wallet');
+
+        // Track chains found
+        const chainsFound = new Set();
+
+        // Add wallet tokens
+        assets.forEach(asset => {
+          const balance = parseFloat(asset.balance) / Math.pow(10, asset.tokenDecimals || 18);
+          if (balance <= 0 || (asset.balanceUsd && parseFloat(asset.balanceUsd) < 0.01)) return;
+
+          chainsFound.add(asset.blockchain);
+
+          portfolio.push({
+            id: 'wtok_' + asset.blockchain + '_' + (asset.contractAddress || 'native') + '_' + Date.now(),
+            coinGeckoId: null,
+            name: asset.tokenName || 'Unknown',
+            symbol: (asset.tokenSymbol || '???').toUpperCase(),
+            amount: balance,
+            manualPrice: null,
+            addedAt: Date.now(),
+            source: 'wallet',
+            blockchain: asset.blockchain,
+            contractAddress: asset.contractAddress || null,
+            tokenPrice: parseFloat(asset.tokenPrice || 0),
+            balanceUsd: parseFloat(asset.balanceUsd || 0),
+            thumbnail: asset.thumbnail || null
+          });
+        });
+
+        savePortfolio(portfolio);
+
+        // Update wallet status
+        const statusEl = document.getElementById('walletStatus');
+        statusEl.innerHTML = Array.from(chainsFound).map(chain => {
+          const cfg = CHAIN_CONFIG[chain] || { label: chain.toUpperCase(), class: '' };
+          return `<span class="chain-pill"><span class="chain-pill__dot" style="background:currentColor"></span> ${cfg.label}</span>`;
+        }).join('') + `<span class="chain-pill">📦 ${assets.length} tokens encontrados</span>`;
+
+        await refreshAllDisplays();
+
+      } catch (err) {
+        alert('Erro ao sincronizar: ' + err.message);
+      } finally {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+      }
+    }
+
+    // === COINGECKO API ===
+    const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
+    const CACHE_DURATION = 5 * 60 * 1000;
+    let cachedPrices = {};
+
+    async function fetchTokenPrices(coinIds) {
+      const cache = JSON.parse(localStorage.getItem('crypto_price_cache') || '{}');
+      if (cache.prices && (Date.now() - cache.timestamp) < CACHE_DURATION) { cachedPrices = cache.prices; return cache.prices; }
+      const ids = coinIds.filter(Boolean).join(',');
+      if (!ids) return {};
+      try {
+        const resp = await fetch(`${COINGECKO_BASE}/simple/price?ids=${ids}&vs_currencies=brl,usd&include_24hr_change=true`);
+        if (resp.status === 429) { cachedPrices = cache.prices || {}; return cachedPrices; }
+        const data = await resp.json();
+        const priceMap = {};
+        for (const [coinId, pd] of Object.entries(data)) {
+          priceMap[coinId] = { brl: pd.brl, usd: pd.usd, change24h: pd.usd_24h_change || 0 };
+        }
+        localStorage.setItem('crypto_price_cache', JSON.stringify({ prices: priceMap, timestamp: Date.now() }));
+        cachedPrices = priceMap; return priceMap;
+      } catch (err) { cachedPrices = cache.prices || {}; return cachedPrices; }
+    }
+
+    async function fetchPriceHistory(coinId, days) {
+      const curr = getCurrency().toLowerCase();
+      try {
+        const resp = await fetch(`${COINGECKO_BASE}/coins/${coinId}/market_chart?vs_currency=${curr}&days=${days || 30}`);
+        if (!resp.ok) throw new Error('API error');
+        const data = await resp.json();
+        return data.prices.map(([ts, price]) => ({ date: new Date(ts), price }));
+      } catch (err) { return []; }
+    }
+
+    // === TOKEN TABLE ===
+    function renderTokenTable(portfolio, prices) {
+      const tbody = document.getElementById('tokenTableBody');
+      if (portfolio.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-state__icon">🪙</div><div class="empty-state__text">Nenhum token adicionado.<br>Conecte sua carteira ou adicione manualmente.</div></div></td></tr>';
+        return;
+      }
+
+      const currency = getCurrency();
+
+      // Sort by value descending
+      const sorted = [...portfolio].map(token => {
+        let totalValue = 0;
+        if (token.source === 'wallet') {
+          totalValue = currency === 'USD' ? token.balanceUsd : token.balanceUsd * exchangeRate;
+        } else if (token.coinGeckoId && prices[token.coinGeckoId]) {
+          const p = prices[token.coinGeckoId];
+          totalValue = (currency === 'BRL' ? p.brl : p.usd) * token.amount;
+        } else if (token.manualPrice) {
+          totalValue = convertValue(token.manualPrice) * token.amount;
+        }
+        return { ...token, _totalValue: totalValue };
+      }).sort((a, b) => b._totalValue - a._totalValue);
+
+      tbody.innerHTML = sorted.map(token => {
+        let currentPrice, change24h, totalValue;
+        const isWallet = token.source === 'wallet';
+        const isManual = !isWallet && !token.coinGeckoId;
+
+        if (isWallet) {
+          currentPrice = currency === 'USD' ? token.tokenPrice : token.tokenPrice * exchangeRate;
+          totalValue = currency === 'USD' ? token.balanceUsd : token.balanceUsd * exchangeRate;
+          change24h = null;
+        } else if (token.coinGeckoId && prices[token.coinGeckoId]) {
+          const p = prices[token.coinGeckoId];
+          currentPrice = currency === 'BRL' ? p.brl : p.usd;
+          change24h = p.change24h;
+          totalValue = currentPrice * token.amount;
+        } else if (token.manualPrice) {
+          currentPrice = convertValue(token.manualPrice);
+          change24h = null;
+          totalValue = currentPrice * token.amount;
+        } else {
+          currentPrice = 0; change24h = null; totalValue = 0;
+        }
+
+        const changeClass = change24h !== null ? (change24h >= 0 ? 'change-positive' : 'change-negative') : '';
+        const changeText = change24h !== null
+          ? `${change24h >= 0 ? '+' : ''}${change24h.toFixed(2)}%`
+          : (isWallet ? '<span class="badge badge--wallet">Wallet</span>' : '<span class="badge badge--manual">Manual</span>');
+
+        const chainCfg = CHAIN_CONFIG[token.blockchain] || null;
+        const chainHtml = chainCfg
+          ? `<span class="badge badge--chain ${chainCfg.class}">${chainCfg.label}</span>`
+          : (isWallet ? `<span class="badge badge--chain">${(token.blockchain||'?').toUpperCase()}</span>` : '<span class="badge badge--chain">-</span>');
+
+        const logoHtml = token.thumbnail
+          ? `<img class="token-logo" src="${token.thumbnail}" alt="${token.symbol}" onerror="this.style.display='none'">`
+          : `<div class="token-logo" style="display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:var(--text-muted)">${(token.symbol||'?').slice(0,2)}</div>`;
+
+        const sourceBadge = isWallet ? '<span class="badge badge--wallet">🔗</span>' : (isManual ? '<span class="badge badge--manual">✏️</span>' : '');
+
+        return `
+          <tr>
+            <td>
+              <div class="token-name-cell">
+                ${logoHtml}
+                <div class="token-info">
+                  <span class="token-name">${escapeHtml(token.name)} ${sourceBadge}</span>
+                  <span class="token-symbol">${escapeHtml(token.symbol)}</span>
+                </div>
+              </div>
+            </td>
+            <td>${chainHtml}</td>
+            <td>${formatTokenAmount(token.amount)}</td>
+            <td>${formatCurrency(currentPrice)}</td>
+            <td class="token-value">${formatCurrency(totalValue)}</td>
+            <td class="${changeClass}">${changeText}</td>
+            <td>${!isWallet ? `<button class="btn-icon btn-icon--danger" onclick="removeToken('${token.id}')" title="Remover">🗑️</button>` : ''}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function formatTokenAmount(amount) {
+      if (amount >= 1000) return amount.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+      if (amount >= 1) return amount.toLocaleString('pt-BR', { maximumFractionDigits: 4 });
+      return amount.toLocaleString('pt-BR', { maximumFractionDigits: 8 });
+    }
+
+    function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+    // === TOKEN MODAL ===
+    let tokenMode = 'select';
+    function openTokenModal() {
+      tokenMode = 'select';
+      document.getElementById('tokenAmount').value = '';
+      document.getElementById('manualTokenName').value = '';
+      document.getElementById('manualTokenSymbol').value = '';
+      document.getElementById('manualTokenPrice').value = '';
+      setTokenMode('select');
+      document.getElementById('tokenModal').classList.add('active');
+    }
+    function setTokenMode(mode) {
+      tokenMode = mode;
+      document.getElementById('tokenMode').value = mode;
+      document.getElementById('tokenSelectMode').style.display = mode === 'select' ? 'block' : 'none';
+      document.getElementById('tokenManualMode').style.display = mode === 'manual' ? 'block' : 'none';
+      document.getElementById('toggleSelect').className = 'form-toggle' + (mode === 'select' ? ' form-toggle--active' : '');
+      document.getElementById('toggleManual').className = 'form-toggle' + (mode === 'manual' ? ' form-toggle--active' : '');
+    }
+    function populateTokenSelect() {
+      document.getElementById('tokenSelect').innerHTML = '<option value="">Selecione um token...</option>' +
+        POPULAR_TOKENS.map(t => `<option value="${t.id}">${t.name} (${t.symbol})</option>`).join('');
+    }
+    function saveToken(e) {
+      e.preventDefault();
+      const amount = parseFloat(document.getElementById('tokenAmount').value);
+      if (!amount || amount <= 0) return alert('Quantidade inválida');
+      let token;
+      if (tokenMode === 'select') {
+        const v = document.getElementById('tokenSelect').value;
+        if (!v) return alert('Selecione um token');
+        const p = POPULAR_TOKENS.find(t => t.id === v);
+        token = { id: 'tok_' + Date.now(), coinGeckoId: p.id, name: p.name, symbol: p.symbol, amount, manualPrice: null, addedAt: Date.now(), source: 'manual' };
+      } else {
+        const name = document.getElementById('manualTokenName').value.trim();
+        const symbol = document.getElementById('manualTokenSymbol').value.trim().toUpperCase();
+        const price = parseFloat(document.getElementById('manualTokenPrice').value);
+        if (!name || !symbol) return alert('Preencha nome e símbolo');
+        if (!price || price <= 0) return alert('Preço inválido');
+        token = { id: 'tok_' + Date.now(), coinGeckoId: null, name, symbol, amount, manualPrice: price, addedAt: Date.now(), source: 'manual' };
+      }
+      const portfolio = getPortfolio(); portfolio.push(token); savePortfolio(portfolio);
+      document.getElementById('tokenModal').classList.remove('active');
+      refreshAllDisplays();
+    }
+    function removeToken(id) {
+      if (!confirm('Remover este token?')) return;
+      savePortfolio(getPortfolio().filter(t => t.id !== id));
+      refreshAllDisplays();
+    }
+
+    // === PROTOCOL CARDS ===
+    function renderProtocolGrid(protocols) {
+      const grid = document.getElementById('protocolGrid');
+      if (protocols.length === 0) {
+        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state__icon">🏦</div><div class="empty-state__text">Nenhum protocolo adicionado.<br>Acompanhe seus investimentos em DeFi.</div></div>';
+        return;
+      }
+      grid.innerHTML = protocols.map(p => {
+        const invested = convertValue(p.investedAmount);
+        const rewards = convertValue(p.rewards);
+        const ti = TYPE_LABELS[p.type] || TYPE_LABELS.staking;
+        return `<div class="protocol-card">
+          <div class="protocol-card__header">
+            <span class="protocol-card__name">${ti.emoji} ${escapeHtml(p.name)}</span>
+            <span class="protocol-card__type">${ti.label}</span>
+          </div>
+          <div class="protocol-card__stats">
+            <div><span class="protocol-stat__label">Investido</span><span class="protocol-stat__value">${formatCurrency(invested)}</span></div>
+            <div><span class="protocol-stat__label">APY</span><span class="protocol-stat__value protocol-stat__value--green">${p.apy}%</span></div>
+            <div><span class="protocol-stat__label">Rewards</span><span class="protocol-stat__value protocol-stat__value--green">${formatCurrency(rewards)}</span></div>
+            <div><span class="protocol-stat__label">Token</span><span class="protocol-stat__value">${escapeHtml(p.token)}</span></div>
+          </div>
+          <button class="btn-icon btn-icon--danger protocol-card__delete" onclick="removeProtocol('${p.id}')" title="Remover">🗑️</button>
+        </div>`;
+      }).join('');
+    }
+
+    function openProtocolModal() {
+      document.getElementById('protoName').value = '';
+      document.getElementById('protoType').value = 'staking';
+      document.getElementById('protoInvested').value = '';
+      document.getElementById('protoApy').value = '';
+      document.getElementById('protoRewards').value = '0';
+      document.getElementById('protoToken').value = '';
+      document.getElementById('protocolModal').classList.add('active');
+    }
+    function saveProtocol(e) {
+      e.preventDefault();
+      const protocol = {
+        id: 'proto_' + Date.now(),
+        name: document.getElementById('protoName').value.trim(),
+        type: document.getElementById('protoType').value,
+        investedAmount: parseFloat(document.getElementById('protoInvested').value) || 0,
+        apy: parseFloat(document.getElementById('protoApy').value) || 0,
+        rewards: parseFloat(document.getElementById('protoRewards').value) || 0,
+        token: document.getElementById('protoToken').value.trim().toUpperCase(),
+        addedAt: Date.now()
+      };
+      const protocols = getProtocols(); protocols.push(protocol); saveProtocols(protocols);
+      document.getElementById('protocolModal').classList.remove('active');
+      refreshAllDisplays();
+    }
+    function removeProtocol(id) {
+      if (!confirm('Remover este protocolo?')) return;
+      saveProtocols(getProtocols().filter(p => p.id !== id));
+      refreshAllDisplays();
+    }
+
+    // === SUMMARY CARDS ===
+    function updateSummaryCards(portfolio, prices) {
+      const currency = getCurrency();
+      let totalValue = 0;
+      let bestToken = { name: '-', change: -Infinity };
+
+      portfolio.forEach(token => {
+        let value = 0, change = null;
+        if (token.source === 'wallet') {
+          value = currency === 'USD' ? token.balanceUsd : token.balanceUsd * exchangeRate;
+        } else if (token.coinGeckoId && prices[token.coinGeckoId]) {
+          const p = prices[token.coinGeckoId];
+          value = (currency === 'BRL' ? p.brl : p.usd) * token.amount;
+          change = p.change24h;
+        } else if (token.manualPrice) {
+          value = convertValue(token.manualPrice) * token.amount;
+        }
+        totalValue += value;
+        if (change !== null && change > bestToken.change) bestToken = { name: token.symbol, change };
+      });
+
+      const defiInvested = getProtocols().reduce((s, p) => s + p.investedAmount, 0);
+
+      document.getElementById('totalValue').textContent = formatCurrency(totalValue);
+      document.getElementById('defiInvested').textContent = formatCurrency(convertValue(defiInvested));
+      document.getElementById('bestPerformer').textContent = bestToken.name !== '-'
+        ? `${bestToken.name} (${bestToken.change >= 0 ? '+' : ''}${bestToken.change.toFixed(2)}%)`
+        : '-';
+      document.getElementById('assetCount').textContent = portfolio.length + getProtocols().length;
+    }
+
+    // === CHARTS ===
+    let allocationChartInstance = null;
+    let priceHistoryChartInstance = null;
+
+    function createAllocationChart(portfolio, prices) {
+      const ctx = document.getElementById('allocationChart').getContext('2d');
+      const currency = getCurrency();
+      const items = portfolio.map(token => {
+        let value = 0;
+        if (token.source === 'wallet') {
+          value = currency === 'USD' ? token.balanceUsd : token.balanceUsd * exchangeRate;
+        } else if (token.coinGeckoId && prices[token.coinGeckoId]) {
+          const p = prices[token.coinGeckoId];
+          value = (currency === 'BRL' ? p.brl : p.usd) * token.amount;
+        } else if (token.manualPrice) {
+          value = convertValue(token.manualPrice) * token.amount;
+        }
+        return { label: token.symbol, value };
+      }).filter(i => i.value > 0).sort((a, b) => b.value - a.value).slice(0, 10);
+
+      if (items.length === 0) {
+        return new Chart(ctx, {
+          type: 'doughnut',
+          data: { labels: ['Sem dados'], datasets: [{ data: [1], backgroundColor: ['rgba(255,255,255,0.03)'], borderWidth: 0 }] },
+          options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { labels: { color: '#555f70' } } } }
+        });
+      }
+      return new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: items.map(i => i.label),
+          datasets: [{ data: items.map(i => i.value), backgroundColor: CHART_COLORS.slice(0, items.length), borderWidth: 0, hoverOffset: 6 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, cutout: '70%',
+          plugins: {
+            legend: { position: 'right', labels: { color: '#8b95a5', padding: 10, usePointStyle: true, pointStyle: 'circle', font: { family: "'Inter'", size: 11 } } },
+            tooltip: { callbacks: { label: (ctx) => ctx.label + ': ' + formatCurrency(ctx.parsed) } }
+          }
+        }
+      });
+    }
+
+    function populateChartTokenSelect(portfolio) {
+      const select = document.getElementById('chartTokenSelect');
+      const apiTokens = portfolio.filter(t => t.coinGeckoId);
+      if (apiTokens.length === 0) { select.innerHTML = '<option value="">-</option>'; return; }
+      select.innerHTML = apiTokens.map(t => `<option value="${t.coinGeckoId}">${t.symbol}</option>`).join('');
+    }
+
+    async function loadPriceHistory() {
+      const coinId = document.getElementById('chartTokenSelect').value;
+      if (!coinId) return;
+      const history = await fetchPriceHistory(coinId, 30);
+      if (!history.length) return;
+      if (priceHistoryChartInstance) priceHistoryChartInstance.destroy();
+      const ctx = document.getElementById('priceHistoryChart').getContext('2d');
+      priceHistoryChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: history.map(p => p.date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })),
+          datasets: [{
+            label: 'Preço', data: history.map(p => p.price),
+            borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.08)',
+            fill: true, tension: 0.4, pointRadius: 0, pointHitRadius: 10, borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => formatCurrency(ctx.parsed.y) } } },
+          scales: {
+            x: { ticks: { color: '#555f70', maxTicksLimit: 7, font: { size: 10 } }, grid: { display: false } },
+            y: { ticks: { color: '#555f70', callback: v => formatCurrency(v), font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.03)' } }
+          }
+        }
+      });
+    }
+
+    // === REFRESH ===
+    async function refreshAllDisplays() {
+      const portfolio = getPortfolio();
+      const coinIds = portfolio.filter(t => t.coinGeckoId).map(t => t.coinGeckoId);
+      const [prices] = await Promise.all([fetchTokenPrices(coinIds), fetchExchangeRate()]);
+      updateSummaryCards(portfolio, prices);
+      renderTokenTable(portfolio, prices);
+      renderProtocolGrid(getProtocols());
+      if (allocationChartInstance) allocationChartInstance.destroy();
+      allocationChartInstance = createAllocationChart(portfolio, prices);
+      populateChartTokenSelect(portfolio);
+    }
+
+    // === INIT ===
+    async function init() {
+      initNav();
+      populateTokenSelect();
+
+      // Restore saved wallet config
+      const savedAddr = localStorage.getItem('wallet_address');
+      const savedKey = localStorage.getItem('ankr_api_key');
+      if (savedAddr) document.getElementById('walletAddress').value = savedAddr;
+      if (savedKey) document.getElementById('ankrKey').value = savedKey;
+
+      await refreshAllDisplays();
+
+      const portfolio = getPortfolio();
+      const firstApi = portfolio.find(t => t.coinGeckoId);
+      if (firstApi) {
+        document.getElementById('chartTokenSelect').value = firstApi.coinGeckoId;
+        loadPriceHistory();
+      }
+
+      setInterval(() => refreshAllDisplays(), 5 * 60 * 1000);
+    }
+
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>
