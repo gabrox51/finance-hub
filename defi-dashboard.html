@@ -230,6 +230,72 @@
     .form-toggle--active-expense { background: var(--red-dim); border-color: var(--red); color: var(--red); }
     .form-toggle--active-income { background: var(--green-dim); border-color: var(--green); color: var(--green); }
 
+    /* === IMPORT FATURA === */
+    .btn-import {
+      background: linear-gradient(135deg, #d97706, #fbbf24); color: #000; border: none;
+      padding: 8px 16px; border-radius: var(--radius-sm);
+      font-family: var(--font); font-weight: 700; font-size: 0.83rem;
+      cursor: pointer; transition: all 200ms ease;
+    }
+    .btn-import:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(217,119,6,0.4); }
+    .btn-ghost {
+      background: transparent; border: 1px solid var(--border); color: var(--text-secondary);
+      padding: 9px 18px; border-radius: var(--radius-sm);
+      font-family: var(--font); font-weight: 600; font-size: 0.85rem; cursor: pointer;
+      transition: all 150ms;
+    }
+    .btn-ghost:hover { border-color: var(--border-hover); color: var(--text-primary); }
+    .import-modal-content {
+      background: var(--bg-card-solid); border: 1px solid var(--border);
+      border-radius: var(--radius-xl); padding: 28px;
+      width: 97%; max-width: 820px; max-height: 92vh;
+      display: flex; flex-direction: column;
+    }
+    .import-summary-bar {
+      display: flex; gap: 20px; flex-wrap: wrap;
+      padding: 11px 16px; background: var(--bg-glass);
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      margin-bottom: 14px; font-size: 0.82rem; color: var(--text-secondary); align-items: center;
+    }
+    .import-summary-bar strong { color: var(--text-primary); }
+    .import-badge {
+      background: var(--purple-dim); color: var(--purple);
+      border: 1px solid rgba(139,92,246,0.25);
+      padding: 2px 10px; border-radius: 20px; font-weight: 700; font-size: 0.76rem;
+    }
+    .import-table-wrap {
+      overflow-y: auto; flex: 1; min-height: 0;
+      border: 1px solid var(--border); border-radius: var(--radius-md);
+      margin-bottom: 14px;
+    }
+    .import-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .import-table th {
+      position: sticky; top: 0; background: var(--bg-card-solid);
+      padding: 10px 12px; text-align: left;
+      color: var(--text-muted); font-size: 0.67rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      border-bottom: 1px solid var(--border);
+    }
+    .import-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .import-table tr:last-child td { border-bottom: none; }
+    .import-table tr.row-skip td { opacity: 0.35; }
+    .import-table tr:hover td { background: var(--bg-glass); }
+    .import-cat-select {
+      background: var(--bg-input); border: 1px solid var(--border);
+      color: var(--text-primary); font-family: var(--font);
+      font-size: 0.77rem; padding: 4px 6px; border-radius: 6px;
+      width: 100%; cursor: pointer;
+    }
+    .import-table col.col-chk  { width: 36px; }
+    .import-table col.col-date { width: 88px; }
+    .import-table col.col-desc { width: auto; }
+    .import-table col.col-val  { width: 100px; }
+    .import-table col.col-cat  { width: 158px; }
+    .import-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
+    .import-amount-expense { color: var(--red); font-weight: 700; }
+    .import-amount-income { color: var(--green); font-weight: 700; }
+    .import-desc { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; max-width: 260px; }
+
     /* === RESPONSIVE === */
     @media (max-width: 1024px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 768px) {
@@ -303,8 +369,12 @@
     <section class="transactions-section">
       <div class="section-header">
         <h2>Transações</h2>
-        <button class="btn-primary" onclick="openModal()">+ Nova Transação</button>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn-import" onclick="openImportModal()">📄 Importar Fatura</button>
+          <button class="btn-primary" onclick="openModal()">+ Nova Transação</button>
+        </div>
       </div>
+      <input type="file" id="importFileInput" accept=".ofx,.qfx,.csv,.txt" style="display:none" onchange="handleImportFile(event)">
       <div class="transactions-filters">
         <input type="text" class="filter-input" id="filterSearch" placeholder="🔍 Buscar..." oninput="filterTransactions()">
         <select class="filter-select" id="filterCategory" onchange="filterTransactions()"><option value="">Todas categorias</option></select>
@@ -353,6 +423,38 @@
         <input type="hidden" id="editId" value="">
         <button type="submit" class="btn-primary btn-full">Salvar Transação</button>
       </form>
+    </div>
+  </div>
+
+  <!-- IMPORT PREVIEW MODAL -->
+  <div class="modal-overlay" id="importModal" onclick="if(event.target===this)closeImportModal()">
+    <div class="import-modal-content">
+      <div class="modal-header">
+        <h3>📄 Importar Fatura</h3>
+        <button class="btn-icon" onclick="closeImportModal()">✕</button>
+      </div>
+      <div id="importSummaryBar" class="import-summary-bar"></div>
+      <div class="import-table-wrap">
+        <table class="import-table" style="table-layout:fixed;width:100%">
+          <colgroup>
+            <col class="col-chk"><col class="col-date"><col class="col-desc"><col class="col-val"><col class="col-cat">
+          </colgroup>
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="importCheckAll" onchange="toggleAllImport(this.checked)" checked title="Selecionar todas"></th>
+              <th>Data</th>
+              <th>Descrição</th>
+              <th>Valor</th>
+              <th>Categoria</th>
+            </tr>
+          </thead>
+          <tbody id="importTableBody"></tbody>
+        </table>
+      </div>
+      <div class="import-actions">
+        <button class="btn-ghost" onclick="closeImportModal()">Cancelar</button>
+        <button class="btn-primary" id="importConfirmBtn" onclick="confirmImport()">✅ Importar selecionadas</button>
+      </div>
     </div>
   </div>
 
@@ -639,6 +741,210 @@
     async function refreshAllDisplays() {
       await fetchExchangeRate();
       updateSummaryCards(); updateCharts(); renderTransactionList();
+    }
+
+    // =============================================
+    // === IMPORTAR FATURA (OFX / CSV) ============
+    // =============================================
+
+    // Palavras-chave para categorização automática (ordem importa — mais específico primeiro)
+    const KEYWORD_MAP = [
+      { cat: 'alimentacao', keys: ['ifood','rappi','uber eats','ubereats','mcdonalds','mcdonald','burger king','burguer king','subway','starbucks','habibs','habib','giraffas',"bob's",'bobs','kfc','pizza','pizzaria','restaurante','rest ','lanchonete','padaria','panificadora','supermercado','mercadinho','mercado livre alim','mercado ','hortifruti','sushi','açougue','acougue','sorveteria','confeitaria','boteco','churrascaria','churrasco','pao de acucar','extra ','carrefour','assai','atacadao','atacadão','walmart','makro','zona sul','prezunic','mundial ','bistek','condor','saint marche','minuto pao','padoca','cantina','doceria','sorvete','acai','açaí','bakery','cafe ','cafeteria'] },
+      { cat: 'transporte', keys: ['uber ','99pop','99 ','cabify','taxi','taxista','shell ','posto ','combustivel','gasolina','etanol','alcool posto','ipiranga','br distrib','ale combustiveis','esso ','metrô','metro ','sptrans','bilhete unico','estacionamento','estapar','parking','park ','latam','gol ','azul ','avianca','voepass','passagem','rodoviaria','rodoviar','onibus','ônibus','brt ','viaçao','viacao','transfer','shuttle','rent a car','locadora','localiza','movida','unidas ','hertz '] },
+      { cat: 'moradia', keys: ['aluguel','condominio','condomínio','imobiliaria','imobiliária','enel ','cemig','copel','coelba','celpe','energisa','cpfl','elektro','eletropaulo','light ','sabesp','sanepar','copasa','cedae','cagece','comgas','ultragaz','liquigas','supergasbras','claro ','vivo ','tim ','oi ','net ','gvt','algar','brisanet','leroy merlin','c&c ','telhanorte','materiais de construção','material construcao','casa construção','obra ','ferragem','vidraçaria','pintura '] },
+      { cat: 'saude', keys: ['farmacia','farmácia','drogasil','drogaraia','droga raia','ultrafarma','panvel','pacheco','drogaria','nissei','dpsp','pague menos','raia ','hospital','clinica','clínica','laboratorio','laboratório','medico','médico','dentista','otica','ótica','unimed','amil','hapvida','notredame','sulamerica saude','bradesco saude','saude ','health','vacina','psico','terapia','exame','consulta '] },
+      { cat: 'saude', keys: ['smart fit','smartfit','bluefit','bodytech','crossfit','academia','biofit','fitness','gym ','pilates','yoga ','natacao','natação'] },
+      { cat: 'lazer', keys: ['netflix','spotify','amazon prime','prime video','disney','hbo ','apple tv','globoplay','deezer','youtube','twitch','twitch sub','steam ','playstation','xbox ','nintendo','cinema','cinemark','cinepolis','uci ','cinesystem','cineflix','teatro','show ','ingresso','eventim','ticket','clube ','airbnb','booking.com','trivago','hotel','pousada','trip ','viagem lazer','parque','aquapark','resort'] },
+      { cat: 'lazer', keys: ['shopee','americanas','magalu','magazine luiza','magazineluiza','casas bahia','submarino','amazon','aliexpress','shein','renner','riachuelo','c&a ','hering','zara ','forever 21','adidas','nike ','puma ','centauro','decathlon','netshoes'] },
+      { cat: 'educacao', keys: ['udemy','coursera','alura','descomplica','estrategia concursos','escola','faculdade','universidade','ead ','cursinho','livraria','saraiva','livraria cultura','fnac','duolingo','babbel','english','rocketseat','dio ','hotmart','eduzz','monetizze','estacio','anhanguera','unip ','senac','sebrae'] },
+      { cat: 'investimentos', keys: ['xp investimentos','rico ','clear ','btg ','nu invest','inter invest','toro ','warren ','modal ','ágora','agora corretora','corretora','tesouro direto','cdb ','lci ','lca ','fundo ','previdencia','previdência','vgbl','pgbl'] },
+    ];
+
+    function normalize(str) {
+      return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 ]/g, ' ');
+    }
+
+    function autoCategorize(description) {
+      const desc = normalize(description);
+      for (const { keys, cat } of KEYWORD_MAP) {
+        for (const key of keys) {
+          if (desc.includes(normalize(key))) return cat;
+        }
+      }
+      return 'outros';
+    }
+
+    // --- Parser OFX (Banco Inter, Itaú, Bradesco, Santander etc.) ---
+    function parseOFX(text) {
+      const transactions = [];
+      const getVal = (block, tag) => {
+        const m = block.match(new RegExp('<' + tag + '>([^<\\r\\n]+)', 'i'));
+        return m ? m[1].trim() : '';
+      };
+      // Split on <STMTTRN> — works for both SGML and XML OFX
+      const parts = text.split(/<STMTTRN>/i);
+      parts.slice(1).forEach(block => {
+        const dateRaw = getVal(block, 'DTPOSTED') || getVal(block, 'DTUSER');
+        const amountRaw = getVal(block, 'TRNAMT');
+        const memo = getVal(block, 'MEMO') || getVal(block, 'NAME') || 'Sem descrição';
+        if (!dateRaw || !amountRaw) return;
+        const y = dateRaw.slice(0,4), mo = dateRaw.slice(4,6), d = dateRaw.slice(6,8);
+        if (!y || !mo || !d) return;
+        const date = `${y}-${mo}-${d}`;
+        const amount = parseFloat(amountRaw.replace(',','.'));
+        if (isNaN(amount) || amount === 0) return;
+        transactions.push({
+          date,
+          amount: Math.abs(amount),
+          description: memo.replace(/\s+/g, ' ').trim(),
+          type: amount < 0 ? 'expense' : 'income',
+        });
+      });
+      return transactions;
+    }
+
+    // --- Parser CSV genérico (Nubank, C6, Inter CSV) ---
+    function parseCSV(text) {
+      const lines = text.trim().split(/\r?\n/);
+      if (lines.length < 2) return [];
+      const transactions = [];
+      // Detect header columns
+      const header = lines[0].toLowerCase().replace(/"/g, '');
+      const cols = header.split(/[,;]/);
+      const idx = {
+        date:   ['date','data','dt','fecha'].map(k => cols.findIndex(c => c.includes(k))).find(i => i >= 0) ?? 0,
+        desc:   ['title','descri','memo','hist','name','nome','lancamento'].map(k => cols.findIndex(c => c.includes(k))).find(i => i >= 0) ?? 1,
+        amount: ['amount','valor','montante','value','debito','credito'].map(k => cols.findIndex(c => c.includes(k))).find(i => i >= 0) ?? 2,
+      };
+      lines.slice(1).forEach(line => {
+        if (!line.trim()) return;
+        const parts = line.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/).map(p => p.replace(/^"|"$/g, '').trim());
+        if (parts.length < 3) return;
+        const rawDate = parts[idx.date] || '';
+        const desc = parts[idx.desc] || 'Sem descrição';
+        const rawAmount = (parts[idx.amount] || '0').replace(/[R$\s]/g,'').replace(',','.');
+        const amount = Math.abs(parseFloat(rawAmount));
+        if (isNaN(amount) || amount === 0) return;
+        // Parse date: dd/mm/yyyy or yyyy-mm-dd
+        let date = '';
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(rawDate)) {
+          const [d,m,y] = rawDate.split('/');
+          date = `${y}-${m}-${d}`;
+        } else if (/^\d{4}-\d{2}-\d{2}/.test(rawDate)) {
+          date = rawDate.slice(0,10);
+        } else { date = new Date().toISOString().slice(0,10); }
+        transactions.push({ date, amount, description: desc, type: parseFloat(rawAmount) < 0 ? 'expense' : 'expense' });
+      });
+      return transactions;
+    }
+
+    // --- Import modal logic ---
+    let pendingImport = [];
+
+    function openImportModal() {
+      document.getElementById('importFileInput').value = '';
+      document.getElementById('importFileInput').click();
+    }
+
+    function handleImportFile(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const content = ev.target.result;
+        const ext = file.name.split('.').pop().toLowerCase();
+        let txns = [];
+        try {
+          if (ext === 'ofx' || ext === 'qfx' || content.includes('<OFX>') || content.includes('<ofx>')) {
+            txns = parseOFX(content);
+          } else {
+            txns = parseCSV(content);
+          }
+        } catch(err) {
+          alert('Não foi possível ler o arquivo: ' + err.message); return;
+        }
+        if (txns.length === 0) {
+          alert('Nenhuma transação encontrada no arquivo. Verifique se é um OFX ou CSV válido.'); return;
+        }
+        // Auto-categorize
+        txns = txns.map(t => ({ ...t, category: autoCategorize(t.description), include: true }));
+        pendingImport = txns;
+        renderImportPreview(txns);
+        document.getElementById('importModal').classList.add('active');
+      };
+      reader.readAsText(file, 'UTF-8');
+    }
+
+    function renderImportPreview(txns) {
+      const catOptions = Object.entries(CATEGORIES).map(([k,v]) => `<option value="${k}">${v.emoji} ${v.label}</option>`).join('');
+      const total = txns.reduce((s,t) => s + (t.type==='expense' ? -t.amount : t.amount), 0);
+      const totalFmt = formatCurrency(Math.abs(total));
+      document.getElementById('importSummaryBar').innerHTML = `
+        <span class="import-badge">${txns.length} transações</span>
+        <span>Total despesas: <strong>${formatCurrency(txns.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0))}</strong></span>
+        <span>Total receitas: <strong>${formatCurrency(txns.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0))}</strong></span>
+        <span style="margin-left:auto;font-size:0.74rem;color:var(--text-muted)">✏️ Ajuste categorias antes de importar</span>
+      `;
+      document.getElementById('importTableBody').innerHTML = txns.map((t, i) => {
+        const cat = CATEGORIES[t.category] || CATEGORIES['outros'];
+        const amtCls = t.type === 'expense' ? 'import-amount-expense' : 'import-amount-income';
+        const amtSign = t.type === 'expense' ? '-' : '+';
+        const selOpts = catOptions.replace(`value="${t.category}"`, `value="${t.category}" selected`);
+        return `<tr id="import-row-${i}" class="${t.include ? '' : 'row-skip'}">
+          <td><input type="checkbox" ${t.include ? 'checked' : ''} onchange="toggleImportRow(${i}, this.checked)"></td>
+          <td style="white-space:nowrap;color:var(--text-muted)">${t.date.split('-').reverse().join('/')}</td>
+          <td><span class="import-desc" title="${t.description}">${t.description}</span></td>
+          <td class="${amtCls}">${amtSign}${formatCurrency(t.amount)}</td>
+          <td><select class="import-cat-select" onchange="updateImportCat(${i}, this.value)">${selOpts}</select></td>
+        </tr>`;
+      }).join('');
+      updateImportBtn();
+    }
+
+    function toggleImportRow(i, checked) {
+      pendingImport[i].include = checked;
+      document.getElementById('import-row-'+i).className = checked ? '' : 'row-skip';
+      updateImportBtn();
+    }
+
+    function toggleAllImport(checked) {
+      pendingImport.forEach((t,i) => {
+        t.include = checked;
+        const row = document.getElementById('import-row-'+i);
+        if (row) row.className = checked ? '' : 'row-skip';
+      });
+      updateImportBtn();
+    }
+
+    function updateImportCat(i, cat) { pendingImport[i].category = cat; }
+
+    function updateImportBtn() {
+      const n = pendingImport.filter(t => t.include).length;
+      document.getElementById('importConfirmBtn').textContent = `✅ Importar ${n} transaç${n !== 1 ? 'ões' : 'ão'}`;
+    }
+
+    function confirmImport() {
+      const toImport = pendingImport.filter(t => t.include);
+      if (toImport.length === 0) { alert('Selecione ao menos uma transação.'); return; }
+      const existing = getTransactions();
+      const newTxns = toImport.map(t => ({
+        id: 'imp_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+        description: t.description,
+        amount: t.amount,
+        category: t.category,
+        type: t.type,
+        date: t.date,
+        createdAt: Date.now(),
+      }));
+      saveTransactions([...newTxns, ...existing]);
+      closeImportModal();
+      refreshAllDisplays();
+      setTimeout(() => alert(`✅ ${newTxns.length} transações importadas com sucesso!`), 100);
+    }
+
+    function closeImportModal() {
+      document.getElementById('importModal').classList.remove('active');
+      pendingImport = [];
     }
 
     async function init() {
