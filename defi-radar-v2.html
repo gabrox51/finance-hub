@@ -734,8 +734,11 @@
 
         // Add wallet tokens
         assets.forEach(asset => {
-          const balance = parseFloat(asset.balance) / Math.pow(10, asset.tokenDecimals || 18);
-          if (balance <= 0 || (asset.balanceUsd && parseFloat(asset.balanceUsd) < 0.01)) return;
+          // Ankr already returns balance in human-readable decimal (not wei)
+          const balance = parseFloat(asset.balance || 0);
+          const usdValue = parseFloat(asset.balanceUsd || 0);
+          if (balance <= 0 && usdValue <= 0) return;
+          if (usdValue > 0 && usdValue < 0.01) return; // filter dust
 
           chainsFound.add(asset.blockchain);
 
